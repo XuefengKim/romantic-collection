@@ -15,6 +15,8 @@ P0 后端工程，技术栈：Node.js + Express + MySQL + Prisma。
 - `.env.example`：环境变量模板
 - `ecosystem.config.js`：PM2 启动配置样板
 - `deploy/nginx.romantic-collection.conf.example`：Nginx 反向代理样板
+- `deploy/bootstrap-ubuntu-22.04.sh`：服务器基础环境安装脚本
+- `deploy/update-backend.sh`：服务器拉代码并重启后端脚本
 
 ## 3. 环境变量
 先复制：
