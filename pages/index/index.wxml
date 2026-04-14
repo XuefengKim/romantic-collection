@@ -48,7 +48,7 @@
             data-id="{{item.id}}"
             disabled="{{taskStates[item.id] && (taskStates[item.id].cooldown > 0 || taskStates[item.id].isSubmitting)}}"
           >
-            {{taskStates[item.id] && taskStates[item.id].isSubmitting ? '提交中' : (taskStates[item.id] && taskStates[item.id].cooldown > 0 ? taskStates[item.id].cooldown + 's' : '打卡')}}
+            {{taskStates[item.id] && taskStates[item.id].isSubmitting ? '打卡中' : (taskStates[item.id] && taskStates[item.id].cooldown > 0 ? taskStates[item.id].cooldown + 's' : '打卡')}}
           </button>
         </view>
       </view>
@@ -75,7 +75,7 @@
             data-id="{{item.id}}"
             disabled="{{taskStates[item.id] && (taskStates[item.id].cooldown > 0 || taskStates[item.id].isSubmitting)}}"
           >
-            {{taskStates[item.id] && taskStates[item.id].isSubmitting ? '提交中' : (taskStates[item.id] && taskStates[item.id].cooldown > 0 ? taskStates[item.id].cooldown + 's' : '打卡')}}
+            {{taskStates[item.id] && taskStates[item.id].isSubmitting ? '打卡中' : (taskStates[item.id] && taskStates[item.id].cooldown > 0 ? taskStates[item.id].cooldown + 's' : '打卡')}}
           </button>
         </view>
       </view>
