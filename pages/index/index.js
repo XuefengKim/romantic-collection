@@ -25,7 +25,7 @@ Page({
       tasks: statsService.getTasks()
     })
 
-    await this.refreshPageData({ showLoading: true })
+    await this.refreshPageData()
     this.startCooldownTimer()
   },
 
