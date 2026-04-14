@@ -28,11 +28,23 @@ function clearStats() {
 }
 
 function fetchRemoteStats() {
-  return apiClient.get('/miniapp/stats')
+  return apiClient.get('/api/home/state', {}, {}, true)
 }
 
-function saveRemoteStats(stats) {
-  return apiClient.post('/miniapp/stats', stats)
+function checkinRemote(taskId) {
+  return apiClient.post('/api/home/checkin', { taskId }, {}, true)
+}
+
+function drawRemote() {
+  return apiClient.post('/api/home/draw', {}, {}, true)
+}
+
+function fetchRemoteCollection() {
+  return apiClient.get('/api/collection', {}, {}, true)
+}
+
+function markRemoteFullAchievementShown() {
+  return apiClient.post('/api/collection/achievement/full-collection/viewed', {}, {}, true)
 }
 
 module.exports = {
@@ -40,5 +52,8 @@ module.exports = {
   saveStats,
   clearStats,
   fetchRemoteStats,
-  saveRemoteStats
+  checkinRemote,
+  drawRemote,
+  fetchRemoteCollection,
+  markRemoteFullAchievementShown
 }

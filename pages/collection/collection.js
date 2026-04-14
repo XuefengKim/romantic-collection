@@ -1,5 +1,9 @@
 const statsService = require('../../services/statsService')
 
+function getErrorMessage(error, fallback = '操作失败，请稍后重试') {
+  return (error && error.message) || fallback
+}
+
 Page({
   data: {
     cardList: [],
@@ -9,34 +13,41 @@ Page({
     showFullAchievement: false
   },
 
-  onLoad() {
-    this.refreshCollectionData()
+  async onLoad() {
+    await this.refreshCollectionData()
   },
 
-  onShow() {
+  async onShow() {
     if (this.hasInitialized) {
-      this.refreshCollectionData()
+      await this.refreshCollectionData()
     }
   },
 
-  refreshCollectionData() {
-    const summary = statsService.getCollectionSummary()
+  async refreshCollectionData() {
+    try {
+      const summary = await statsService.getCollectionSummary()
 
-    this.setData({
-      cardList: summary.cardList,
-      collectedCards: summary.collectedCards,
-      collectedCount: summary.collectedCount,
-      totalCount: summary.totalCount,
-      showFullAchievement: summary.shouldShowFullAchievement
-    })
+      this.setData({
+        cardList: summary.cardList,
+        collectedCards: summary.collectedCards,
+        collectedCount: summary.collectedCount,
+        totalCount: summary.totalCount,
+        showFullAchievement: summary.shouldShowFullAchievement
+      })
 
-    this.hasPendingAchievement = summary.shouldShowFullAchievement
-    this.hasInitialized = true
+      this.hasPendingAchievement = summary.shouldShowFullAchievement
+      this.hasInitialized = true
+    } catch (error) {
+      wx.showToast({
+        title: getErrorMessage(error, '加载收藏册失败'),
+        icon: 'none'
+      })
+    }
   },
 
-  persistAchievementIfNeeded() {
+  async persistAchievementIfNeeded() {
     if (this.hasPendingAchievement) {
-      statsService.markFullCollectionAchievementShown()
+      await statsService.markFullCollectionAchievementShown()
       this.hasPendingAchievement = false
     }
   },
@@ -45,20 +56,36 @@ Page({
     wx.navigateBack()
   },
 
-  closeAchievementModal() {
-    this.persistAchievementIfNeeded()
-    this.setData({
-      showFullAchievement: false
-    })
+  async closeAchievementModal() {
+    try {
+      await this.persistAchievementIfNeeded()
+      this.setData({
+        showFullAchievement: false
+      })
+    } catch (error) {
+      wx.showToast({
+        title: getErrorMessage(error, '记录成就状态失败'),
+        icon: 'none'
+      })
+    }
   },
 
-  shareAchievement() {
-    this.persistAchievementIfNeeded()
-    wx.showToast({
-      title: '分享功能开发中',
-      icon: 'none'
-    })
-    this.closeAchievementModal()
+  async shareAchievement() {
+    try {
+      await this.persistAchievementIfNeeded()
+      wx.showToast({
+        title: '分享功能开发中',
+        icon: 'none'
+      })
+      this.setData({
+        showFullAchievement: false
+      })
+    } catch (error) {
+      wx.showToast({
+        title: getErrorMessage(error, '记录成就状态失败'),
+        icon: 'none'
+      })
+    }
   },
 
   stopPropagation() {}

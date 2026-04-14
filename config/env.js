@@ -1,9 +1,12 @@
 const STORAGE_KEYS = {
-  STATS: 'romanticCollectionStats'
+  STATS: 'romanticCollectionStats',
+  AUTH_TOKEN: 'romanticCollectionAuthToken',
+  USER_PROFILE: 'romanticCollectionUserProfile',
+  PAIR_STATUS: 'romanticCollectionPairStatus'
 }
 
 const FEATURE_FLAGS = {
-  ENABLE_REMOTE_SYNC: false,
+  ENABLE_REMOTE_SYNC: true,
   ENABLE_SHARE: false,
   ENABLE_RANK: false
 }

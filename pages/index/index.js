@@ -1,5 +1,9 @@
 const statsService = require('../../services/statsService')
 
+function getErrorMessage(error, fallback = '操作失败，请稍后重试') {
+  return (error && error.message) || fallback
+}
+
 Page({
   data: {
     stats: statsService.createDefaultStats(),
@@ -12,25 +16,52 @@ Page({
     drawnCard: null,
     cardCount: 0,
     cardRarityColor: '',
-    hearts: []
+    hearts: [],
+    isPageLoading: true
   },
 
-  onLoad() {
+  async onLoad() {
     this.setData({
       tasks: statsService.getTasks()
     })
-    this.refreshPageData()
+
+    await this.refreshPageData({ showLoading: true })
     this.startCooldownTimer()
   },
 
-  onShow() {
-    this.refreshPageData()
+  async onShow() {
+    if (this.hasInitialized) {
+      await this.refreshPageData()
+    }
   },
 
-  refreshPageData() {
-    const stats = statsService.getStats()
-    this.setData({ stats })
-    this.initTaskStates(stats)
+  async refreshPageData(options = {}) {
+    const { showLoading = false } = options
+
+    try {
+      if (showLoading) {
+        wx.showLoading({ title: '加载中...' })
+      }
+
+      const homeState = await statsService.getHomeState()
+      this.setData({
+        stats: homeState.stats,
+        tasks: homeState.tasks,
+        isPageLoading: false
+      })
+      this.initTaskStates(homeState.stats)
+      this.hasInitialized = true
+    } catch (error) {
+      this.setData({ isPageLoading: false })
+      wx.showToast({
+        title: getErrorMessage(error, '加载失败'),
+        icon: 'none'
+      })
+    } finally {
+      if (showLoading) {
+        wx.hideLoading()
+      }
+    }
   },
 
   initTaskStates(stats = this.data.stats) {
@@ -64,54 +95,69 @@ Page({
     }, 1000)
   },
 
-  checkinTask(e) {
+  async checkinTask(e) {
     const taskId = Number(e.currentTarget.dataset.id)
-    const result = statsService.checkinTask(taskId)
 
-    if (!result.success) {
-      return
-    }
+    try {
+      const result = await statsService.checkinTask(taskId)
 
-    const taskStates = Object.assign({}, this.data.taskStates)
-    taskStates[taskId] = { cooldown: Math.ceil(statsService.CHECKIN_COOLDOWN_MS / 1000) }
+      if (!result.success) {
+        return
+      }
 
-    this.setData({
-      stats: result.stats,
-      taskStates
-    })
+      const taskStates = Object.assign({}, this.data.taskStates)
+      taskStates[taskId] = { cooldown: Math.ceil(statsService.CHECKIN_COOLDOWN_MS / 1000) }
 
-    wx.showToast({
-      title: result.gainedDraws > 0 ? '打卡成功，获得抽卡机会 ✨' : '打卡成功 +1心意',
-      icon: 'success'
-    })
-  },
+      this.setData({
+        stats: result.stats,
+        taskStates
+      })
 
-  openDraw() {
-    const result = statsService.drawCard()
-
-    if (!result.success) {
       wx.showToast({
-        title: '暂无抽卡机会',
+        title: result.gainedDraws > 0 ? '打卡成功，获得抽卡机会 ✨' : '打卡成功 +1心意',
+        icon: 'success'
+      })
+    } catch (error) {
+      wx.showToast({
+        title: getErrorMessage(error, '打卡失败'),
         icon: 'none'
       })
-      return
     }
+  },
 
-    this.setData({
-      stats: result.stats,
-      showDrawModal: true,
-      drawnCard: result.drawnCard,
-      cardCount: result.cardCount,
-      cardRarityColor: result.drawnCard.color
-    })
+  async openDraw() {
+    try {
+      const result = await statsService.drawCard()
 
-    if (result.drawnCard.rarity === 'SSR' || result.drawnCard.rarity === 'UR') {
-      wx.vibrateShort({ type: 'heavy' })
-    } else {
-      wx.vibrateShort({ type: 'light' })
+      if (!result.success) {
+        wx.showToast({
+          title: '暂无抽卡机会',
+          icon: 'none'
+        })
+        return
+      }
+
+      this.setData({
+        stats: result.stats,
+        showDrawModal: true,
+        drawnCard: result.drawnCard,
+        cardCount: result.cardCount,
+        cardRarityColor: result.drawnCard.color
+      })
+
+      if (result.drawnCard.rarity === 'SSR' || result.drawnCard.rarity === 'UR') {
+        wx.vibrateShort({ type: 'heavy' })
+      } else {
+        wx.vibrateShort({ type: 'light' })
+      }
+
+      this.createFloatingHearts()
+    } catch (error) {
+      wx.showToast({
+        title: getErrorMessage(error, '抽卡失败'),
+        icon: 'none'
+      })
     }
-
-    this.createFloatingHearts()
   },
 
   createFloatingHearts() {

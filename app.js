@@ -4,7 +4,11 @@ const catalogRepository = require('./repositories/catalogRepository')
 
 App({
   onLaunch() {
-    statsService.initializeStats()
+    const result = statsService.initializeStats()
+
+    if (result && typeof result.catch === 'function') {
+      result.catch(() => {})
+    }
   },
 
   getEnv() {
@@ -20,6 +24,7 @@ App({
   },
 
   globalData: {
-    userInfo: null
+    userInfo: null,
+    pairStatus: null
   }
 })

@@ -1,8 +1,16 @@
+const env = require('../config/env')
 const statsRepository = require('../repositories/statsRepository')
 const catalogRepository = require('../repositories/catalogRepository')
+const authService = require('./authService')
 
 const CHECKIN_COOLDOWN_MS = 60000
 const HEARTS_PER_DRAW = 5
+
+let remoteHomeStateCache = null
+
+function isRemoteMode() {
+  return env.DATA_SOURCE === 'remote'
+}
 
 function createDefaultStats() {
   return {
@@ -18,12 +26,28 @@ function createDefaultStats() {
   }
 }
 
+function createDefaultHomeState() {
+  return {
+    pairStatus: null,
+    stats: createDefaultStats(),
+    tasks: catalogRepository.getTasks()
+  }
+}
+
 function sumCollectedCards(collectedCards = {}) {
   return Object.values(collectedCards).reduce((sum, count) => sum + count, 0)
 }
 
 function computeDrawChances(stats) {
   return Math.max(0, (stats.totalDrawEarned || 0) - (stats.totalDrawUsed || 0))
+}
+
+function normalizeTasks(rawTasks) {
+  const defaultTasks = catalogRepository.getTasks()
+  return {
+    romantic: Array.isArray(rawTasks && rawTasks.romantic) ? rawTasks.romantic : defaultTasks.romantic,
+    housework: Array.isArray(rawTasks && rawTasks.housework) ? rawTasks.housework : defaultTasks.housework
+  }
 }
 
 function normalizeStats(rawStats) {
@@ -48,13 +72,30 @@ function normalizeStats(rawStats) {
   return merged
 }
 
+function normalizeHomeState(rawState = {}) {
+  return {
+    pairStatus: rawState.pairStatus || null,
+    stats: normalizeStats(rawState.stats),
+    tasks: normalizeTasks(rawState.tasks)
+  }
+}
+
+function setRemoteHomeStateCache(homeState) {
+  remoteHomeStateCache = normalizeHomeState(homeState)
+  return remoteHomeStateCache
+}
+
+function getRemoteHomeStateCache() {
+  return remoteHomeStateCache || createDefaultHomeState()
+}
+
 function persistStats(stats) {
   const normalized = normalizeStats(stats)
   statsRepository.saveStats(normalized)
   return normalized
 }
 
-function initializeStats() {
+function initializeLocalStats() {
   const existing = statsRepository.loadStats()
   if (!existing) {
     return persistStats(createDefaultStats())
@@ -63,11 +104,33 @@ function initializeStats() {
   return persistStats(existing)
 }
 
+async function initializeStats() {
+  if (!isRemoteMode()) {
+    return initializeLocalStats()
+  }
+
+  try {
+    await authService.ensureLogin()
+  } catch (error) {
+    return createDefaultStats()
+  }
+
+  return getHomeState().then(homeState => homeState.stats)
+}
+
 function getStats() {
+  if (isRemoteMode()) {
+    return getRemoteHomeStateCache().stats
+  }
+
   return normalizeStats(statsRepository.loadStats() || createDefaultStats())
 }
 
 function getTasks() {
+  if (isRemoteMode()) {
+    return getRemoteHomeStateCache().tasks
+  }
+
   return catalogRepository.getTasks()
 }
 
@@ -81,7 +144,34 @@ function getTaskCooldown(stats, taskId, now = Date.now()) {
   return remaining > 0 ? remaining : 0
 }
 
-function checkinTask(taskId) {
+async function runWithLoginRetry(operation) {
+  try {
+    await authService.ensureLogin()
+    return await operation()
+  } catch (error) {
+    if (error && (error.code === 401 || error.statusCode === 401)) {
+      await authService.ensureLogin({ forceRefresh: true })
+      return operation()
+    }
+
+    throw error
+  }
+}
+
+async function getHomeState() {
+  if (!isRemoteMode()) {
+    return {
+      pairStatus: null,
+      stats: getStats(),
+      tasks: getTasks()
+    }
+  }
+
+  const remoteState = await runWithLoginRetry(() => statsRepository.fetchRemoteStats())
+  return setRemoteHomeStateCache(remoteState)
+}
+
+function checkinTaskLocal(taskId) {
   const stats = getStats()
   const cooldown = getTaskCooldown(stats, taskId)
 
@@ -115,7 +205,31 @@ function checkinTask(taskId) {
   }
 }
 
-function drawCard() {
+async function checkinTask(taskId) {
+  if (!isRemoteMode()) {
+    return checkinTaskLocal(taskId)
+  }
+
+  const result = await runWithLoginRetry(() => statsRepository.checkinRemote(taskId))
+  const cachedHomeState = getRemoteHomeStateCache()
+  const nextStats = normalizeStats(Object.assign({}, cachedHomeState.stats, result.stats, {
+    lastCheckin: Object.assign({}, cachedHomeState.stats.lastCheckin, {
+      [taskId]: Date.now()
+    })
+  }))
+
+  setRemoteHomeStateCache(Object.assign({}, cachedHomeState, {
+    stats: nextStats
+  }))
+
+  return {
+    success: true,
+    gainedDraws: result.drawChanceDelta || 0,
+    stats: nextStats
+  }
+}
+
+function drawCardLocal() {
   const stats = getStats()
 
   if (stats.drawChances <= 0) {
@@ -148,7 +262,33 @@ function drawCard() {
   }
 }
 
-function getCollectionSummary() {
+async function drawCard() {
+  if (!isRemoteMode()) {
+    return drawCardLocal()
+  }
+
+  const result = await runWithLoginRetry(() => statsRepository.drawRemote())
+  const cachedHomeState = getRemoteHomeStateCache()
+  const nextCollectedCards = Object.assign({}, cachedHomeState.stats.collectedCards, {
+    [result.card.id]: result.quantity
+  })
+  const nextStats = normalizeStats(Object.assign({}, cachedHomeState.stats, result.stats, {
+    collectedCards: nextCollectedCards
+  }))
+
+  setRemoteHomeStateCache(Object.assign({}, cachedHomeState, {
+    stats: nextStats
+  }))
+
+  return {
+    success: true,
+    drawnCard: result.card,
+    cardCount: result.quantity,
+    stats: nextStats
+  }
+}
+
+function getCollectionSummaryLocal() {
   const stats = getStats()
   const cardList = getCardPool()
   const collectedCount = Object.keys(stats.collectedCards).filter(id => stats.collectedCards[id] > 0).length
@@ -162,7 +302,15 @@ function getCollectionSummary() {
   }
 }
 
-function markFullCollectionAchievementShown() {
+async function getCollectionSummary() {
+  if (!isRemoteMode()) {
+    return getCollectionSummaryLocal()
+  }
+
+  return runWithLoginRetry(() => statsRepository.fetchRemoteCollection())
+}
+
+function markFullCollectionAchievementShownLocal() {
   const stats = getStats()
   const updatedStats = Object.assign({}, stats, {
     meta: Object.assign({}, stats.meta, {
@@ -173,11 +321,33 @@ function markFullCollectionAchievementShown() {
   return persistStats(updatedStats)
 }
 
+async function markFullCollectionAchievementShown() {
+  if (!isRemoteMode()) {
+    return markFullCollectionAchievementShownLocal()
+  }
+
+  await runWithLoginRetry(() => statsRepository.markRemoteFullAchievementShown())
+
+  const cachedHomeState = getRemoteHomeStateCache()
+  const nextStats = normalizeStats(Object.assign({}, cachedHomeState.stats, {
+    meta: Object.assign({}, cachedHomeState.stats.meta, {
+      fullCollectionAchievementShown: true
+    })
+  }))
+
+  setRemoteHomeStateCache(Object.assign({}, cachedHomeState, {
+    stats: nextStats
+  }))
+
+  return nextStats
+}
+
 module.exports = {
   CHECKIN_COOLDOWN_MS,
   HEARTS_PER_DRAW,
   createDefaultStats,
   initializeStats,
+  getHomeState,
   getStats,
   getTasks,
   getCardPool,
