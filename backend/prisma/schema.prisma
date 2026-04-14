@@ -11,55 +11,61 @@ model User {
   openid      String    @unique @db.VarChar(64)
   unionid     String?   @db.VarChar(64)
   nickname    String?   @db.VarChar(64)
-  avatarUrl   String?   @db.VarChar(255)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  avatarUrl   String?   @map("avatar_url") @db.VarChar(255)
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
   stats       UserStat?
   inviteCodes InviteCode[]
   checkins    CheckinRecord[]
   draws       DrawRecord[]
   cards       UserCardCollection[]
+
+  @@map("users")
 }
 
 model CouplePair {
-  id          Int      @id @default(autoincrement())
-  userAId     Int
-  userBId     Int
-  status      String   @default("active") @db.VarChar(20)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        Int      @id @default(autoincrement())
+  userAId   Int      @map("user_a_id")
+  userBId   Int      @map("user_b_id")
+  status    String   @default("active") @db.VarChar(20)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@unique([userAId, userBId])
   @@index([userAId])
   @@index([userBId])
+  @@map("couple_pairs")
 }
 
 model InviteCode {
-  id          Int      @id @default(autoincrement())
-  code        String   @unique @db.VarChar(16)
-  creatorId   Int
-  status      String   @default("active") @db.VarChar(20)
-  expiresAt   DateTime
-  usedById    Int?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  creator     User     @relation(fields: [creatorId], references: [id])
+  id        Int      @id @default(autoincrement())
+  code      String   @unique @db.VarChar(16)
+  creatorId Int      @map("creator_id")
+  status    String   @default("active") @db.VarChar(20)
+  expiresAt DateTime @map("expires_at")
+  usedById  Int?     @map("used_by_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  creator   User     @relation(fields: [creatorId], references: [id])
 
   @@index([creatorId])
   @@index([usedById])
+  @@map("invite_codes")
 }
 
 model UserStat {
-  id                          Int      @id @default(autoincrement())
-  userId                      Int      @unique
-  totalHearts                 Int      @default(0)
-  drawChances                 Int      @default(0)
-  totalDrawEarned             Int      @default(0)
-  totalDrawUsed               Int      @default(0)
-  fullCollectionAchievementShown Boolean @default(false)
-  createdAt                   DateTime @default(now())
-  updatedAt                   DateTime @updatedAt
-  user                        User     @relation(fields: [userId], references: [id])
+  id                             Int      @id @default(autoincrement())
+  userId                         Int      @unique @map("user_id")
+  totalHearts                    Int      @default(0) @map("total_hearts")
+  drawChances                    Int      @default(0) @map("draw_chances")
+  totalDrawEarned                Int      @default(0) @map("total_draw_earned")
+  totalDrawUsed                  Int      @default(0) @map("total_draw_used")
+  fullCollectionAchievementShown Boolean  @default(false) @map("full_collection_achievement_shown")
+  createdAt                      DateTime @default(now()) @map("created_at")
+  updatedAt                      DateTime @updatedAt @map("updated_at")
+  user                           User     @relation(fields: [userId], references: [id])
+
+  @@map("user_stats")
 }
 
 model TaskCatalog {
@@ -68,9 +74,11 @@ model TaskCatalog {
   name        String   @db.VarChar(128)
   description String   @db.VarChar(255)
   active      Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
   checkins    CheckinRecord[]
+
+  @@map("task_catalog")
 }
 
 model CardCatalog {
@@ -80,49 +88,54 @@ model CardCatalog {
   description String   @db.VarChar(255)
   color       String   @db.VarChar(16)
   active      Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
   draws       DrawRecord[]
   collections UserCardCollection[]
+
+  @@map("card_catalog")
 }
 
 model CheckinRecord {
-  id          Int      @id @default(autoincrement())
-  userId      Int
-  taskId      Int
-  heartsDelta Int      @default(1)
-  createdAt   DateTime @default(now())
-  user        User     @relation(fields: [userId], references: [id])
+  id          Int         @id @default(autoincrement())
+  userId      Int         @map("user_id")
+  taskId      Int         @map("task_id")
+  heartsDelta Int         @default(1) @map("hearts_delta")
+  createdAt   DateTime    @default(now()) @map("created_at")
+  user        User        @relation(fields: [userId], references: [id])
   task        TaskCatalog @relation(fields: [taskId], references: [id])
 
   @@index([userId, createdAt])
   @@index([taskId])
+  @@map("checkin_records")
 }
 
 model DrawRecord {
-  id          Int      @id @default(autoincrement())
-  userId      Int
-  cardId      Int
-  rarity      String   @db.VarChar(16)
-  createdAt   DateTime @default(now())
-  user        User     @relation(fields: [userId], references: [id])
-  card        CardCatalog @relation(fields: [cardId], references: [id])
+  id        Int         @id @default(autoincrement())
+  userId    Int         @map("user_id")
+  cardId    Int         @map("card_id")
+  rarity    String      @db.VarChar(16)
+  createdAt DateTime    @default(now()) @map("created_at")
+  user      User        @relation(fields: [userId], references: [id])
+  card      CardCatalog @relation(fields: [cardId], references: [id])
 
   @@index([userId, createdAt])
   @@index([cardId])
+  @@map("draw_records")
 }
 
 model UserCardCollection {
-  id          Int      @id @default(autoincrement())
-  userId      Int
-  cardId      Int
-  quantity    Int      @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  user        User     @relation(fields: [userId], references: [id])
-  card        CardCatalog @relation(fields: [cardId], references: [id])
+  id        Int         @id @default(autoincrement())
+  userId    Int         @map("user_id")
+  cardId    Int         @map("card_id")
+  quantity  Int         @default(0)
+  createdAt DateTime    @default(now()) @map("created_at")
+  updatedAt DateTime    @updatedAt @map("updated_at")
+  user      User        @relation(fields: [userId], references: [id])
+  card      CardCatalog @relation(fields: [cardId], references: [id])
 
   @@unique([userId, cardId])
   @@index([userId])
   @@index([cardId])
+  @@map("user_card_collection")
 }
