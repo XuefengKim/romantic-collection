@@ -43,12 +43,12 @@
             <view class="task-desc">{{item.desc}}</view>
           </view>
           <button 
-            class="checkin-btn {{taskStates[item.id] && taskStates[item.id].cooldown > 0 ? 'cooldown' : ''}}" 
+            class="checkin-btn {{taskStates[item.id] && (taskStates[item.id].cooldown > 0 || taskStates[item.id].isSubmitting) ? 'cooldown' : ''}}" 
             bindtap="checkinTask" 
             data-id="{{item.id}}"
-            disabled="{{taskStates[item.id] && taskStates[item.id].cooldown > 0}}"
+            disabled="{{taskStates[item.id] && (taskStates[item.id].cooldown > 0 || taskStates[item.id].isSubmitting)}}"
           >
-            {{taskStates[item.id] && taskStates[item.id].cooldown > 0 ? taskStates[item.id].cooldown + 's' : '打卡'}}
+            {{taskStates[item.id] && taskStates[item.id].isSubmitting ? '提交中' : (taskStates[item.id] && taskStates[item.id].cooldown > 0 ? taskStates[item.id].cooldown + 's' : '打卡')}}
           </button>
         </view>
       </view>
@@ -70,12 +70,12 @@
             <view class="task-desc">{{item.desc}}</view>
           </view>
           <button 
-            class="checkin-btn {{taskStates[item.id] && taskStates[item.id].cooldown > 0 ? 'cooldown' : ''}}" 
+            class="checkin-btn {{taskStates[item.id] && (taskStates[item.id].cooldown > 0 || taskStates[item.id].isSubmitting) ? 'cooldown' : ''}}" 
             bindtap="checkinTask" 
             data-id="{{item.id}}"
-            disabled="{{taskStates[item.id] && taskStates[item.id].cooldown > 0}}"
+            disabled="{{taskStates[item.id] && (taskStates[item.id].cooldown > 0 || taskStates[item.id].isSubmitting)}}"
           >
-            {{taskStates[item.id] && taskStates[item.id].cooldown > 0 ? taskStates[item.id].cooldown + 's' : '打卡'}}
+            {{taskStates[item.id] && taskStates[item.id].isSubmitting ? '提交中' : (taskStates[item.id] && taskStates[item.id].cooldown > 0 ? taskStates[item.id].cooldown + 's' : '打卡')}}
           </button>
         </view>
       </view>

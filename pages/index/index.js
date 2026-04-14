@@ -70,7 +70,8 @@ Page({
 
     allTasks.forEach(task => {
       taskStates[task.id] = {
-        cooldown: statsService.getTaskCooldown(stats, task.id)
+        cooldown: statsService.getTaskCooldown(stats, task.id),
+        isSubmitting: false
       }
     })
 
@@ -97,16 +98,29 @@ Page({
 
   async checkinTask(e) {
     const taskId = Number(e.currentTarget.dataset.id)
+    const currentState = this.data.taskStates[taskId] || { cooldown: 0, isSubmitting: false }
+
+    if (currentState.cooldown > 0 || currentState.isSubmitting) {
+      return
+    }
+
+    const taskStates = Object.assign({}, this.data.taskStates)
+    taskStates[taskId] = Object.assign({}, currentState, { isSubmitting: true })
+    this.setData({ taskStates })
 
     try {
       const result = await statsService.checkinTask(taskId)
 
       if (!result.success) {
+        taskStates[taskId] = Object.assign({}, currentState, { isSubmitting: false })
+        this.setData({ taskStates })
         return
       }
 
-      const taskStates = Object.assign({}, this.data.taskStates)
-      taskStates[taskId] = { cooldown: Math.ceil(statsService.CHECKIN_COOLDOWN_MS / 1000) }
+      taskStates[taskId] = {
+        cooldown: Math.ceil(statsService.CHECKIN_COOLDOWN_MS / 1000),
+        isSubmitting: false
+      }
 
       this.setData({
         stats: result.stats,
@@ -118,8 +132,14 @@ Page({
         icon: 'success'
       })
     } catch (error) {
+      taskStates[taskId] = Object.assign({}, currentState, {
+        cooldown: error && error.statusCode === 409 ? Math.ceil(statsService.CHECKIN_COOLDOWN_MS / 1000) : 0,
+        isSubmitting: false
+      })
+      this.setData({ taskStates })
+
       wx.showToast({
-        title: getErrorMessage(error, '打卡失败'),
+        title: error && error.statusCode === 409 ? '刚打过卡，稍后再试' : getErrorMessage(error, '打卡失败'),
         icon: 'none'
       })
     }
