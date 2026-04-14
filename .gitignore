@@ -1,0 +1,20 @@
+# macOS
+.DS_Store
+
+# WeChat DevTools local/private config
+project.private.config.json
+
+# Backend secrets and local env
+backend/.env
+
+# Backend dependencies and caches
+backend/node_modules/
+backend/.npm-cache/
+
+# Logs
+*.log
+backend/logs/
+
+# Optional local database files
+backend/prisma/dev.db
+backend/prisma/*.db

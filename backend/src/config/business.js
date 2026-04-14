@@ -1,0 +1,5 @@
+module.exports = {
+  HEARTS_PER_DRAW: 5,
+  CHECKIN_COOLDOWN_MS: 60 * 1000,
+  INVITE_CODE_EXPIRES_MS: 24 * 60 * 60 * 1000
+}

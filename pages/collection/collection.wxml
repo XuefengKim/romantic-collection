@@ -1,0 +1,37 @@
+<!--pages/collection/collection.wxml-->
+<view class="container">
+  <view class="collection-header">
+    <view class="title">浪漫收藏册</view>
+    <view class="subtitle">已收集 {{collectedCount}} / {{totalCount}} 张卡片</view>
+  </view>
+
+  <view class="card-grid">
+    <view wx:for="{{cardList}}" wx:key="id" class="card-item {{collectedCards[item.id] ? 'collected' : 'uncollected'}} {{item.rarity}}">
+      <view wx:if="{{collectedCards[item.id]}}" class="card-content" style="border-color: {{item.color}};">
+        <view class="rarity-badge" style="background: {{item.color}};">{{item.rarity}}</view>
+        <view class="card-name">{{item.name}}</view>
+        <view class="card-count">× {{collectedCards[item.id]}}</view>
+      </view>
+      <view wx:else class="card-content uncollected">
+        <view class="question-mark">?</view>
+        <view class="uncollected-text">未解锁</view>
+      </view>
+    </view>
+  </view>
+
+  <button class="back-btn" bindtap="goBack">返回首页</button>
+
+  <view wx:if="{{showFullAchievement}}" class="modal-overlay" bindtap="closeAchievementModal">
+    <view class="achievement-modal" catchtap="stopPropagation">
+      <view class="achievement-content">
+        <view class="achievement-title">💑 恭喜你们！浪漫收集满级啦 💑</view>
+        <view class="achievement-text">感谢你们把每一件小事都变成浪漫，继续加油，永远爱下去~</view>
+        <view class="achievement-emoji">❤️💖💕💘❤️</view>
+      </view>
+      <view class="achievement-buttons">
+        <button class="achievement-btn secondary" bindtap="shareAchievement">分享成就</button>
+        <button class="achievement-btn primary" bindtap="closeAchievementModal">再攒一波</button>
+      </view>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,108 @@
+<!--pages/index/index.wxml-->
+<view class="container">
+  <!-- 数据看板 -->
+  <view class="stats-card">
+    <view class="title">我们的浪漫收藏本</view>
+    <view class="subtitle">收集点滴心意，兑换专属惊喜</view>
+    <view class="stats-row">
+      <view class="stats-item">
+        <view class="stats-number">{{stats.totalHearts}}</view>
+        <view class="stats-label">累计心意</view>
+        <view class="stats-hint">每一点心意，都是爱你的证明 💌</view>
+      </view>
+      <view class="stats-item">
+        <view class="stats-number highlight">{{stats.drawChances}}</view>
+        <view class="stats-label">待领惊喜</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 抽卡区域 - 优化版 -->
+  <view class="draw-section">
+    <button wx:if="{{stats.drawChances > 0}}" class="draw-btn" bindtap="openDraw">开启惊喜盲盒 ✨</button>
+    <view wx:else class="draw-empty">
+      <!-- 原来：<view class="draw-empty-icon">🎰</view> -->
+      <view class="draw-empty-text">暂无抽卡机会</view>
+      <view class="draw-empty-hint">完成5次打卡，获得抽取SSR机会 💫</view>
+    </view>
+  </view>
+
+  <!-- 任务打卡区域 -->
+  <view class="tasks-section">
+    <!-- 浪漫任务 - 优化版 -->
+    <view class="task-category romantic">
+      <view class="category-title">
+        <!-- 原来：<text class="category-icon">💖</text> -->
+        <image class="category-icon" src="/static/images/romantic-icon.png" mode="aspectFit"></image>
+        <text class="category-text">浪漫任务</text>
+      </view>
+      <view class="task-list">
+        <view wx:for="{{tasks.romantic}}" wx:key="id" class="task-item">
+          <view class="task-info">
+            <view class="task-name">{{item.name}}</view>
+            <view class="task-desc">{{item.desc}}</view>
+          </view>
+          <button 
+            class="checkin-btn {{taskStates[item.id] && taskStates[item.id].cooldown > 0 ? 'cooldown' : ''}}" 
+            bindtap="checkinTask" 
+            data-id="{{item.id}}"
+            disabled="{{taskStates[item.id] && taskStates[item.id].cooldown > 0}}"
+          >
+            {{taskStates[item.id] && taskStates[item.id].cooldown > 0 ? taskStates[item.id].cooldown + 's' : '打卡'}}
+          </button>
+        </view>
+      </view>
+    </view>
+
+    <!-- 家务任务 - 优化版 -->
+    <view class="task-category housework">
+      <view class="category-title">
+        <!-- 原来：<text class="category-icon">🧹</text> -->
+        <image class="category-icon" src="/static/images/housework-icon.png" mode="aspectFit"></image>
+        <text class="category-text">日常点滴</text>
+      </view>
+      <!-- 统一说明，替代每个任务里的 hint -->
+      <view class="section-hint">坚持打卡，积攒抽卡机会 💫</view>
+      <view class="task-list">
+        <view wx:for="{{tasks.housework}}" wx:key="id" class="task-item">
+          <view class="task-info">
+            <view class="task-name">{{item.name}}</view>
+            <view class="task-desc">{{item.desc}}</view>
+          </view>
+          <button 
+            class="checkin-btn {{taskStates[item.id] && taskStates[item.id].cooldown > 0 ? 'cooldown' : ''}}" 
+            bindtap="checkinTask" 
+            data-id="{{item.id}}"
+            disabled="{{taskStates[item.id] && taskStates[item.id].cooldown > 0}}"
+          >
+            {{taskStates[item.id] && taskStates[item.id].cooldown > 0 ? taskStates[item.id].cooldown + 's' : '打卡'}}
+          </button>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 前往收集册 -->
+  <view class="nav-section">
+    <button class="nav-btn" bindtap="goToCollection">查看我的收集册 📖</button>
+    <button class="nav-btn rank-btn hidden" bindtap="goToRank">排行榜 🏆</button>
+  </view>
+
+  <!-- 抽卡结果弹窗 -->
+  <view wx:if="{{showDrawModal}}" class="modal-overlay" bindtap="closeDrawModal">
+    <view class="modal-content {{drawnCard.rarity}}" catchtap="stopPropagation">
+      <view class="card-result" style="background: {{cardRarityColor}};">
+        <view class="rarity-tag">{{drawnCard.rarity}}</view>
+        <view class="card-name">{{drawnCard.name}}</view>
+        <view class="card-desc">{{drawnCard.desc}}</view>
+        <view class="count-info">已收集 × {{cardCount}}</view>
+      </view>
+      <button class="close-btn" bindtap="closeDrawModal">确定</button>
+    </view>
+  </view>
+
+  <!-- 漂浮爱心元素 -->
+  <view wx:for="{{hearts}}" wx:key="index" class="floating-heart" style="left: {{item.left}}%; animation-delay: {{item.delay}}s;">{{item.icon}}</view>
+  
+</view>
+

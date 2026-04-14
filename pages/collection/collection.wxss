@@ -1,0 +1,186 @@
+/* pages/collection/collection.wxss */
+.container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #ffeef2 0%, #ffc0cb 100%);
+  padding: 20rpx;
+  box-sizing: border-box;
+  padding-bottom: 100rpx;
+}
+
+.collection-header {
+  text-align: center;
+  padding: 30rpx 0;
+}
+
+.collection-header .title {
+  font-size: 40rpx;
+  color: #d6336c;
+  font-weight: bold;
+  margin-bottom: 10rpx;
+}
+
+.collection-header .subtitle {
+  font-size: 28rpx;
+  color: #886868;
+}
+
+.card-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
+.card-item {
+  width: 48%;
+  margin-bottom: 20rpx;
+}
+
+.card-content {
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 20rpx;
+  padding: 30rpx 20rpx;
+  text-align: center;
+  border: 4rpx solid transparent;
+  box-shadow: 0 4rpx 16rpx rgba(214, 51, 108, 0.1);
+  min-height: 200rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.card-content.uncollected {
+  background: rgba(255, 255, 255, 0.5);
+  border: 2rpx dashed #d6336c;
+}
+
+.question-mark {
+  font-size: 80rpx;
+  color: #d6336c;
+  opacity: 0.3;
+  font-weight: bold;
+}
+
+.uncollected-text {
+  font-size: 24rpx;
+  color: #a88888;
+  margin-top: 10rpx;
+}
+
+.rarity-badge {
+  display: inline-block;
+  color: white;
+  font-size: 22rpx;
+  font-weight: bold;
+  padding: 6rpx 18rpx;
+  border-radius: 20rpx;
+  margin-bottom: 15rpx;
+}
+
+.card-name {
+  font-size: 28rpx;
+  color: #4a3737;
+  font-weight: 500;
+  margin-bottom: 10rpx;
+}
+
+.card-count {
+  font-size: 24rpx;
+  color: #d6336c;
+}
+
+/* UR卡片发光效果 */
+.card-item.UR .card-content {
+  box-shadow: 0 0 20rpx 5rpx rgba(214, 51, 108, 0.4);
+}
+
+.back-btn {
+  margin-top: 40rpx;
+  width: 100%;
+  background: #d6336c;
+  color: white;
+  border-radius: 40rpx;
+  padding: 25rpx 0;
+  font-size: 30rpx;
+}
+
+/* 满级成就弹窗 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 30rpx;
+  box-sizing: border-box;
+}
+
+.achievement-modal {
+  background: white;
+  border-radius: 24rpx;
+  width: 100%;
+  max-width: 600rpx;
+  overflow: hidden;
+  animation: achievementIn 0.5s ease-out;
+}
+
+@keyframes achievementIn {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.achievement-content {
+  padding: 50rpx 30rpx 30rpx;
+  text-align: center;
+}
+
+.achievement-title {
+  font-size: 36rpx;
+  color: #d6336c;
+  font-weight: bold;
+  margin-bottom: 20rpx;
+}
+
+.achievement-text {
+  font-size: 28rpx;
+  color: #4a3737;
+  line-height: 1.6;
+  margin-bottom: 30rpx;
+}
+
+.achievement-emoji {
+  font-size: 40rpx;
+}
+
+.achievement-buttons {
+  display: flex;
+  border-top: 1rpx solid #eee;
+}
+
+.achievement-btn {
+  flex: 1;
+  padding: 30rpx 0;
+  font-size: 28rpx;
+  border-radius: 0;
+}
+
+.achievement-btn.secondary {
+  background: #f5f5f5;
+  color: #888;
+}
+
+.achievement-btn.primary {
+  background: #d6336c;
+  color: white;
+}
