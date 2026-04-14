@@ -4,10 +4,12 @@ const catalogRepository = require('./repositories/catalogRepository')
 
 App({
   onLaunch() {
-    const result = statsService.initializeStats()
+    if (env.DATA_SOURCE === 'local') {
+      const result = statsService.initializeStats()
 
-    if (result && typeof result.catch === 'function') {
-      result.catch(() => {})
+      if (result && typeof result.catch === 'function') {
+        result.catch(() => {})
+      }
     }
   },
 
