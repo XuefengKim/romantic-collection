@@ -13,13 +13,13 @@ Page({
     showFullAchievement: false
   },
 
-  async onLoad() {
-    await this.refreshCollectionData()
+  onLoad() {
+    this.refreshCollectionData()
   },
 
-  async onShow() {
+  onShow() {
     if (this.hasInitialized) {
-      await this.refreshCollectionData()
+      this.refreshCollectionData()
     }
   },
 

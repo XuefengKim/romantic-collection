@@ -20,18 +20,18 @@ Page({
     isPageLoading: true
   },
 
-  async onLoad() {
+  onLoad() {
     this.setData({
       tasks: statsService.getTasks()
     })
 
-    await this.refreshPageData()
+    this.refreshPageData()
     this.startCooldownTimer()
   },
 
-  async onShow() {
+  onShow() {
     if (this.hasInitialized) {
-      await this.refreshPageData()
+      this.refreshPageData()
     }
   },
 
