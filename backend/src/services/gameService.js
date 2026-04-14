@@ -30,7 +30,8 @@ function buildLastCheckinMap(checkins) {
 }
 
 async function getUserCollectionState(userId) {
-  const [collections, allCards] = await Promise.all([
+  const [stats, collections, allCards] = await Promise.all([
+    getOrCreateUserStats(userId),
     prisma.userCardCollection.findMany({
       where: { userId, quantity: { gt: 0 } },
       orderBy: { cardId: 'asc' }
@@ -53,13 +54,29 @@ async function getUserCollectionState(userId) {
   }))
 
   const unlockedCount = cardList.filter(card => card.owned > 0).length
+  const shouldShowFullAchievement =
+    cardList.length > 0 &&
+    unlockedCount === cardList.length &&
+    !stats.fullCollectionAchievementShown
 
   return {
     cardList,
     collectedCards,
     unlockedCount,
-    totalCards: cardList.length
+    totalCards: cardList.length,
+    shouldShowFullAchievement
   }
+}
+
+async function markFullCollectionAchievementShown(userId) {
+  await getOrCreateUserStats(userId)
+
+  return prisma.userStat.update({
+    where: { userId },
+    data: {
+      fullCollectionAchievementShown: true
+    }
+  })
 }
 
 async function buildHomeState(userId, pairStatus, tasks) {
@@ -234,6 +251,7 @@ async function performDraw(userId) {
 module.exports = {
   getOrCreateUserStats,
   getUserCollectionState,
+  markFullCollectionAchievementShown,
   buildHomeState,
   performCheckin,
   performDraw

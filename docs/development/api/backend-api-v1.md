@@ -34,9 +34,9 @@
 ```
 
 ## 2. 获取当前用户信息
-### GET /api/me
+### GET /api/auth/me
 Header:
-- Authorization: Bearer <token>
+- Authorization: Bearer ***
 
 ## 3. 生成邀请码
 ### POST /api/couple/invite-code
@@ -61,20 +61,36 @@ Header:
 返回：心意值、抽卡次数、任务配置、绑定状态。
 
 ## 6. 提交打卡
-### POST /api/checkin
+### POST /api/home/checkin
 Header:
-- Authorization: Bearer <token>
+- Authorization: Bearer ***
 请求：
 ```json
 { "taskId": 1 }
 ```
 
 ## 7. 抽卡
-### POST /api/draw
+### POST /api/home/draw
 Header:
-- Authorization: Bearer <token>
+- Authorization: Bearer ***
 
 ## 8. 获取收藏册
 ### GET /api/collection
 Header:
-- Authorization: Bearer <token>
+- Authorization: Bearer ***
+
+## 9. 记录“满收藏成就弹窗已展示”
+### POST /api/collection/achievement/full-collection/viewed
+Header:
+- Authorization: Bearer ***
+
+返回：
+```json
+{
+  "code": 0,
+  "message": "已记录成就弹窗状态",
+  "data": {
+    "fullCollectionAchievementShown": true
+  }
+}
+```
