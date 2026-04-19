@@ -2,8 +2,12 @@ const env = require('../config/env')
 const storage = require('../utils/storage')
 const apiClient = require('../services/api/client')
 
+function canUseLocalStatsStorage() {
+  return env.DATA_SOURCE !== 'remote' || !!storage.get(env.STORAGE_KEYS.LOCAL_BIND_MODE, false)
+}
+
 function loadStats() {
-  if (env.DATA_SOURCE === 'remote') {
+  if (!canUseLocalStatsStorage()) {
     throw new Error('Remote stats repository is not implemented yet. Keep ENABLE_REMOTE_SYNC=false until API wiring is completed.')
   }
 
@@ -11,7 +15,7 @@ function loadStats() {
 }
 
 function saveStats(stats) {
-  if (env.DATA_SOURCE === 'remote') {
+  if (!canUseLocalStatsStorage()) {
     throw new Error('Remote stats repository is not implemented yet. Keep ENABLE_REMOTE_SYNC=false until API wiring is completed.')
   }
 
@@ -20,7 +24,7 @@ function saveStats(stats) {
 }
 
 function clearStats() {
-  if (env.DATA_SOURCE === 'remote') {
+  if (!canUseLocalStatsStorage()) {
     throw new Error('Remote stats repository is not implemented yet. Keep ENABLE_REMOTE_SYNC=false until API wiring is completed.')
   }
 

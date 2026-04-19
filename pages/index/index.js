@@ -1,4 +1,5 @@
 const statsService = require('../../services/statsService')
+const authService = require('../../services/authService')
 
 function getErrorMessage(error, fallback = '操作失败，请稍后重试') {
   return (error && error.message) || fallback
@@ -6,6 +7,7 @@ function getErrorMessage(error, fallback = '操作失败，请稍后重试') {
 
 Page({
   data: {
+    pairStatus: null,
     stats: statsService.createDefaultStats(),
     tasks: {
       romantic: [],
@@ -44,7 +46,14 @@ Page({
       }
 
       const homeState = await statsService.getHomeState()
+      if (!this.canAccessHome(homeState.pairStatus)) {
+        this.setData({ isPageLoading: false })
+        this.redirectToPairPage()
+        return
+      }
+
       this.setData({
+        pairStatus: homeState.pairStatus,
         stats: homeState.stats,
         tasks: homeState.tasks,
         isPageLoading: false
@@ -62,6 +71,21 @@ Page({
         wx.hideLoading()
       }
     }
+  },
+
+  canAccessHome(pairStatus) {
+    return authService.isLocalAnonymousBound() || pairStatus === 'bound'
+  },
+
+  redirectToPairPage() {
+    if (this.isRedirectingToPair) {
+      return
+    }
+
+    this.isRedirectingToPair = true
+    wx.reLaunch({
+      url: '/pages/pair/pair'
+    })
   },
 
   initTaskStates(stats = this.data.stats) {
@@ -210,6 +234,12 @@ Page({
   goToCollection() {
     wx.navigateTo({
       url: '/pages/collection/collection'
+    })
+  },
+
+  goToPairPage() {
+    wx.navigateTo({
+      url: '/pages/pair/pair'
     })
   },
 
