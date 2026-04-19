@@ -248,38 +248,52 @@ Page({
     wx.reLaunch({ url: '/pages/pair/pair' })
   },
 
-  onTapUnbind() {
+  confirmUnbind() {
+    return new Promise((resolve) => {
+      wx.showModal({
+        title: '确认取消绑定吗？',
+        content: '取消后，你们将解除当前绑定关系，并删除所有数据（包括心意、抽卡次数、收藏册等内容），且无法恢复。',
+        cancelText: '我再想想',
+        confirmText: '确认解绑',
+        confirmColor: '#d6336c',
+        success: (result) => {
+          resolve(!!(result && result.confirm))
+        },
+        fail: () => {
+          wx.showToast({
+            title: '暂时无法打开确认弹窗',
+            icon: 'none'
+          })
+          resolve(false)
+        }
+      })
+    })
+  },
+
+  async onTapUnbind() {
     if (this.data.isUnbindLoading) {
       return
     }
 
-    wx.showModal({
-      title: '确认取消绑定吗？',
-      content: '取消后，你们将解除当前绑定关系，并删除所有数据（包括心意、抽卡次数、收藏册等内容），且无法恢复。',
-      cancelText: '我再想想',
-      confirmText: '确认取消绑定',
-      confirmColor: '#d6336c',
-      success: async ({ confirm }) => {
-        if (!confirm) {
-          return
-        }
+    const confirmed = await this.confirmUnbind()
+    if (!confirmed) {
+      return
+    }
 
-        this.setData({ isUnbindLoading: true })
-        try {
-          await coupleService.unbindCouple()
-          wx.showToast({ title: '已取消绑定', icon: 'success' })
-          setTimeout(() => {
-            this.resetAfterUnbind()
-          }, 300)
-        } catch (error) {
-          wx.showToast({
-            title: getErrorMessage(error, '取消绑定失败'),
-            icon: 'none'
-          })
-        } finally {
-          this.setData({ isUnbindLoading: false })
-        }
-      }
-    })
+    this.setData({ isUnbindLoading: true })
+    try {
+      await coupleService.unbindCouple()
+      wx.showToast({ title: '已取消绑定', icon: 'success' })
+      setTimeout(() => {
+        this.resetAfterUnbind()
+      }, 300)
+    } catch (error) {
+      wx.showToast({
+        title: getErrorMessage(error, '取消绑定失败'),
+        icon: 'none'
+      })
+    } finally {
+      this.setData({ isUnbindLoading: false })
+    }
   }
 })
