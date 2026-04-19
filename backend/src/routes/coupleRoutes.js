@@ -6,5 +6,6 @@ const router = express.Router()
 
 router.post('/invite-code', auth, coupleController.createInviteCode)
 router.post('/bind', auth, coupleController.bindCouple)
+router.post('/unbind', auth, coupleController.unbindCouple)
 
 module.exports = router

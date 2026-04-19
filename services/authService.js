@@ -32,10 +32,39 @@ function persistSession(session) {
   return session
 }
 
+function isLocalAnonymousBound() {
+  return !!storage.get(env.STORAGE_KEYS.LOCAL_BIND_MODE, false)
+}
+
+function enterLocalAnonymousBind() {
+  storage.set(env.STORAGE_KEYS.LOCAL_BIND_MODE, true)
+  const anonymousId = `local-anonymous-${Date.now()}`
+  return persistSession({
+    token: 'local-anonymous-bind',
+    user: {
+      id: anonymousId,
+      openId: anonymousId,
+      nickname: '匿名伴侣'
+    },
+    pairStatus: 'bound'
+  })
+}
+
+function exitLocalAnonymousBind() {
+  storage.remove(env.STORAGE_KEYS.LOCAL_BIND_MODE)
+}
+
 function clearSession() {
   storage.remove(env.STORAGE_KEYS.AUTH_TOKEN)
   storage.remove(env.STORAGE_KEYS.USER_PROFILE)
   storage.remove(env.STORAGE_KEYS.PAIR_STATUS)
+  updateGlobalData({ user: null, pairStatus: null })
+}
+
+function resetAllLocalState() {
+  clearSession()
+  exitLocalAnonymousBind()
+  storage.remove(env.STORAGE_KEYS.STATS)
   updateGlobalData({ user: null, pairStatus: null })
 }
 
@@ -84,6 +113,16 @@ async function ensureLogin(options = {}) {
   const { forceRefresh = false } = options
   const session = getStoredSession()
 
+  if (isLocalAnonymousBound()) {
+    updateGlobalData(Object.assign({}, session, {
+      pairStatus: 'bound'
+    }))
+    return Object.assign({}, session, {
+      token: session.token || 'local-anonymous-bind',
+      pairStatus: 'bound'
+    })
+  }
+
   if (!forceRefresh && session.token) {
     updateGlobalData(session)
     return session
@@ -96,10 +135,22 @@ async function ensureLogin(options = {}) {
   return login()
 }
 
+function updatePairStatus(pairStatus) {
+  const session = getStoredSession()
+  return persistSession(Object.assign({}, session, {
+    pairStatus
+  }))
+}
+
 module.exports = {
   getStoredSession,
   persistSession,
   clearSession,
+  resetAllLocalState,
   login,
-  ensureLogin
+  ensureLogin,
+  updatePairStatus,
+  isLocalAnonymousBound,
+  enterLocalAnonymousBind,
+  exitLocalAnonymousBind
 }

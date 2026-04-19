@@ -1,8 +1,10 @@
 const { success } = require('../utils/response')
 const { getUserCollectionState, markFullCollectionAchievementShown } = require('../services/gameService')
+const { assertBoundUser } = require('../services/coupleService')
 
 async function getCollection(req, res, next) {
   try {
+    await assertBoundUser(req.auth.userId)
     const data = await getUserCollectionState(req.auth.userId)
 
     res.json(success({
@@ -21,6 +23,7 @@ async function getCollection(req, res, next) {
 
 async function markFullAchievementViewed(req, res, next) {
   try {
+    await assertBoundUser(req.auth.userId)
     await markFullCollectionAchievementShown(req.auth.userId)
 
     res.json(success({

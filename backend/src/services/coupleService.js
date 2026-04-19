@@ -20,6 +20,15 @@ async function getPairStatusByUserId(userId) {
   return pair ? 'bound' : 'unbound'
 }
 
+async function assertBoundUser(userId, message = '请先完成情侣绑定，再进入你们的秘密空间') {
+  const pair = await getActivePairByUserId(userId)
+  if (!pair) {
+    throw appError(message, 403, 403)
+  }
+
+  return pair
+}
+
 function generateInviteCode() {
   return Math.random().toString(36).slice(2, 10).toUpperCase()
 }
@@ -91,8 +100,17 @@ async function bindCoupleByInviteCode(currentUserId, inviteCodeText) {
   const [userAId, userBId] = normalizePairUsers(inviteCode.creatorId, currentUserId)
 
   const pair = await prisma.$transaction(async tx => {
-    const createdPair = await tx.couplePair.create({
-      data: {
+    const createdPair = await tx.couplePair.upsert({
+      where: {
+        userAId_userBId: {
+          userAId,
+          userBId
+        }
+      },
+      update: {
+        status: 'active'
+      },
+      create: {
         userAId,
         userBId,
         status: 'active'
@@ -124,9 +142,81 @@ async function bindCoupleByInviteCode(currentUserId, inviteCodeText) {
   return pair
 }
 
+async function resetUserGameData(tx, userId) {
+  await tx.checkinRecord.deleteMany({
+    where: { userId }
+  })
+
+  await tx.drawRecord.deleteMany({
+    where: { userId }
+  })
+
+  await tx.userCardCollection.deleteMany({
+    where: { userId }
+  })
+
+  await tx.userStat.upsert({
+    where: { userId },
+    update: {
+      totalHearts: 0,
+      drawChances: 0,
+      totalDrawEarned: 0,
+      totalDrawUsed: 0,
+      fullCollectionAchievementShown: false
+    },
+    create: {
+      userId,
+      totalHearts: 0,
+      drawChances: 0,
+      totalDrawEarned: 0,
+      totalDrawUsed: 0,
+      fullCollectionAchievementShown: false
+    }
+  })
+}
+
+async function unbindCoupleByUserId(userId) {
+  const pair = await getActivePairByUserId(userId)
+  if (!pair) {
+    throw appError('当前未绑定，无需取消绑定', 409, 409)
+  }
+
+  const userIds = [pair.userAId, pair.userBId]
+
+  await prisma.$transaction(async tx => {
+    await tx.couplePair.update({
+      where: { id: pair.id },
+      data: {
+        status: 'cancelled'
+      }
+    })
+
+    await tx.inviteCode.updateMany({
+      where: {
+        creatorId: { in: userIds },
+        status: 'active'
+      },
+      data: {
+        status: 'revoked'
+      }
+    })
+
+    await Promise.all(userIds.map(currentUserId => resetUserGameData(tx, currentUserId)))
+  })
+
+  return {
+    pairId: pair.id,
+    userIds,
+    pairStatus: 'unbound',
+    reset: true
+  }
+}
+
 module.exports = {
   getActivePairByUserId,
   getPairStatusByUserId,
+  assertBoundUser,
   createInviteCodeForUser,
-  bindCoupleByInviteCode
+  bindCoupleByInviteCode,
+  unbindCoupleByUserId
 }

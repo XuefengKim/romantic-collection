@@ -1,4 +1,5 @@
 const statsService = require('../../services/statsService')
+const authService = require('../../services/authService')
 
 function getErrorMessage(error, fallback = '操作失败，请稍后重试') {
   return (error && error.message) || fallback
@@ -38,6 +39,19 @@ Page({
       this.hasPendingAchievement = summary.shouldShowFullAchievement
       this.hasInitialized = true
     } catch (error) {
+      const shouldRedirectToPair = !authService.isLocalAnonymousBound() && error && (error.statusCode === 401 || error.statusCode === 403 || error.statusCode === 409)
+
+      if (shouldRedirectToPair) {
+        wx.showToast({
+          title: '请先完成情侣绑定',
+          icon: 'none'
+        })
+        setTimeout(() => {
+          wx.reLaunch({ url: '/pages/pair/pair' })
+        }, 300)
+        return
+      }
+
       wx.showToast({
         title: getErrorMessage(error, '加载收藏册失败'),
         icon: 'none'

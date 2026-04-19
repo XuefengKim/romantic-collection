@@ -12,6 +12,10 @@ function isRemoteMode() {
   return env.DATA_SOURCE === 'remote'
 }
 
+function isLocalPlayableMode() {
+  return !isRemoteMode() || authService.isLocalAnonymousBound()
+}
+
 function createDefaultStats() {
   return {
     totalHearts: 0,
@@ -28,7 +32,7 @@ function createDefaultStats() {
 
 function createDefaultHomeState() {
   return {
-    pairStatus: null,
+    pairStatus: authService.isLocalAnonymousBound() ? 'bound' : null,
     stats: createDefaultStats(),
     tasks: catalogRepository.getTasks()
   }
@@ -89,6 +93,10 @@ function getRemoteHomeStateCache() {
   return remoteHomeStateCache || createDefaultHomeState()
 }
 
+function resetRuntimeState() {
+  remoteHomeStateCache = null
+}
+
 function persistStats(stats) {
   const normalized = normalizeStats(stats)
   statsRepository.saveStats(normalized)
@@ -105,7 +113,7 @@ function initializeLocalStats() {
 }
 
 async function initializeStats() {
-  if (!isRemoteMode()) {
+  if (isLocalPlayableMode()) {
     return initializeLocalStats()
   }
 
@@ -119,7 +127,7 @@ async function initializeStats() {
 }
 
 function getStats() {
-  if (isRemoteMode()) {
+  if (isRemoteMode() && !authService.isLocalAnonymousBound()) {
     return getRemoteHomeStateCache().stats
   }
 
@@ -127,7 +135,7 @@ function getStats() {
 }
 
 function getTasks() {
-  if (isRemoteMode()) {
+  if (isRemoteMode() && !authService.isLocalAnonymousBound()) {
     return getRemoteHomeStateCache().tasks
   }
 
@@ -159,9 +167,9 @@ async function runWithLoginRetry(operation) {
 }
 
 async function getHomeState() {
-  if (!isRemoteMode()) {
+  if (isLocalPlayableMode()) {
     return {
-      pairStatus: null,
+      pairStatus: authService.isLocalAnonymousBound() ? 'bound' : null,
       stats: getStats(),
       tasks: getTasks()
     }
@@ -206,7 +214,7 @@ function checkinTaskLocal(taskId) {
 }
 
 async function checkinTask(taskId) {
-  if (!isRemoteMode()) {
+  if (isLocalPlayableMode()) {
     return checkinTaskLocal(taskId)
   }
 
@@ -263,7 +271,7 @@ function drawCardLocal() {
 }
 
 async function drawCard() {
-  if (!isRemoteMode()) {
+  if (isLocalPlayableMode()) {
     return drawCardLocal()
   }
 
@@ -303,7 +311,7 @@ function getCollectionSummaryLocal() {
 }
 
 async function getCollectionSummary() {
-  if (!isRemoteMode()) {
+  if (isLocalPlayableMode()) {
     return getCollectionSummaryLocal()
   }
 
@@ -322,7 +330,7 @@ function markFullCollectionAchievementShownLocal() {
 }
 
 async function markFullCollectionAchievementShown() {
-  if (!isRemoteMode()) {
+  if (isLocalPlayableMode()) {
     return markFullCollectionAchievementShownLocal()
   }
 
@@ -356,5 +364,6 @@ module.exports = {
   drawCard,
   getCollectionSummary,
   markFullCollectionAchievementShown,
-  normalizeStats
+  normalizeStats,
+  resetRuntimeState
 }

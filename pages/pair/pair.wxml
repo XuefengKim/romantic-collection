@@ -1,0 +1,75 @@
+<view class="container">
+  <view wx:if="{{pairStatus === 'bound' && !isBindCelebrating}}" class="panel-card bound-card bound-panel-card">
+    <view class="pair-badge bound">已绑定</view>
+    <view class="panel-title bound-panel-title">绑定成功啦 ✨</view>
+    <view class="panel-desc">你们已经成功绑定，现在可以回到属于你们的秘密空间，继续打卡、抽卡和收藏心动时刻。</view>
+    <button class="primary-btn celebration-entry-btn" bindtap="enterSecretSpace">返回我们的秘密空间</button>
+    <button class="danger-btn" bindtap="onTapUnbind" loading="{{isUnbindLoading}}" disabled="{{isUnbindLoading}}">取消绑定</button>
+  </view>
+
+  <block wx:elif="{{pairStatus !== 'bound'}}">
+    <view class="intro-stack {{isBindCelebrating ? 'intro-stack-exit' : ''}}">
+      <view class="hero-card">
+        <view class="hero-eyebrow">欢迎来到你们的恋爱收集空间</view>
+        <view class="hero-title">先绑定，再一起进入首页</view>
+        <view class="hero-desc">这里不是枯燥的“情侣考核表”，而是把约会、体贴、分担和惊喜，慢慢存成你们共同的浪漫收藏册。</view>
+        <view class="pair-badge {{pairStatus === 'bound' ? 'bound' : 'unbound'}}">
+          {{pairStatus === 'bound' ? '已绑定' : '未绑定'}}
+        </view>
+      </view>
+
+      <view class="tips-card">
+        <view class="tips-title">开始前的小提醒</view>
+        <view class="tips-desc">当前页会自动刷新绑定状态；如果另一半刚完成绑定，通常几秒内你就能看到更新。</view>
+        <button class="ghost-btn" bindtap="refreshPageData" loading="{{isRefreshing}}" disabled="{{isRefreshing}}">手动刷新状态</button>
+      </view>
+    </view>
+
+    <view class="panel-card">
+      <view class="section-block">
+        <view class="section-title">1. 生成我的邀请码</view>
+        <view class="section-desc">发给对方输入即可绑定；如果邀请码过期或没找到，也可以重新生成。</view>
+        <button class="primary-btn" bindtap="generateInviteCode" loading="{{isInviteLoading}}" disabled="{{isInviteLoading}}">
+          {{inviteCode ? '重新生成邀请码' : '生成邀请码'}}
+        </button>
+
+        <view wx:if="{{inviteCode}}" class="invite-code-box">
+          <view class="invite-code-label">我的邀请码</view>
+          <view class="invite-code-value">{{inviteCode}}</view>
+          <view wx:if="{{inviteCodeExpiresText}}" class="invite-code-expire">{{inviteCodeExpiresText}}</view>
+          <button class="secondary-btn" bindtap="copyInviteCode">复制邀请码</button>
+        </view>
+      </view>
+
+      <view class="divider"></view>
+
+      <view class="section-block">
+        <view class="section-title">2. 输入对方的邀请码</view>
+        <view class="section-desc">如果 TA 已经把邀请码发给你，直接输入后就能完成绑定。</view>
+        <input
+          class="pair-input"
+          type="text"
+          maxlength="16"
+          placeholder="请输入邀请码，如 ABCD1234"
+          value="{{bindInviteCode}}"
+          bindinput="onInviteCodeInput"
+        />
+        <button class="primary-btn bind-btn" bindtap="bindByInviteCode" loading="{{isBindLoading}}" disabled="{{isBindLoading}}">
+          立即绑定
+        </button>
+      </view>
+    </view>
+  </block>
+
+  <view wx:if="{{showBindSuccessScreen}}" class="celebration-screen">
+    <view wx:for="{{celebrationHearts}}" wx:key="id" class="celebration-float" style="left: {{item.left}}%; animation-delay: {{item.delay}}s;">{{item.icon}}</view>
+    <view class="celebration-ring celebration-ring-one"></view>
+    <view class="celebration-ring celebration-ring-two"></view>
+    <view class="celebration-panel">
+      <view class="celebration-kicker">绑定成功</view>
+      <view class="celebration-title">你们的小世界，已经正式连上啦 ✨</view>
+      <view class="celebration-desc">接下来就去开启只属于你们的秘密空间，把每一次心动都认真收好。</view>
+      <button class="celebration-cta" bindtap="enterSecretSpace">开启属于我们的秘密空间</button>
+    </view>
+  </view>
+</view>

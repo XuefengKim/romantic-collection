@@ -17,11 +17,24 @@
     </view>
   </view>
 
-  <!-- 抽卡区域 - 优化版 -->
+  <!-- 绑定状态入口 -->
+  <view class="pair-status-row" bindtap="goToPairPage">
+    <view class="pair-status-main">
+      <view class="pair-status-label">情侣绑定</view>
+      <view class="pair-status-text">{{pairStatus === 'bound' ? '已绑定，点击查看绑定状态' : '未绑定，去完成绑定'}}</view>
+    </view>
+    <view class="pair-status-side">
+      <view class="pair-status-badge {{pairStatus === 'bound' ? 'bound' : 'unbound'}}">
+        {{pairStatus === 'bound' ? '已绑定' : '未绑定'}}
+      </view>
+      <view class="pair-status-arrow">›</view>
+    </view>
+  </view>
+
+  <!-- 抽卡区域 -->
   <view class="draw-section">
     <button wx:if="{{stats.drawChances > 0}}" class="draw-btn" bindtap="openDraw">开启惊喜盲盒 ✨</button>
     <view wx:else class="draw-empty">
-      <!-- 原来：<view class="draw-empty-icon">🎰</view> -->
       <view class="draw-empty-text">暂无抽卡机会</view>
       <view class="draw-empty-hint">完成5次打卡，获得抽取SSR机会 💫</view>
     </view>
@@ -29,10 +42,8 @@
 
   <!-- 任务打卡区域 -->
   <view class="tasks-section">
-    <!-- 浪漫任务 - 优化版 -->
     <view class="task-category romantic">
       <view class="category-title">
-        <!-- 原来：<text class="category-icon">💖</text> -->
         <image class="category-icon" src="/static/images/romantic-icon.png" mode="aspectFit"></image>
         <text class="category-text">浪漫任务</text>
       </view>
@@ -54,14 +65,11 @@
       </view>
     </view>
 
-    <!-- 家务任务 - 优化版 -->
     <view class="task-category housework">
       <view class="category-title">
-        <!-- 原来：<text class="category-icon">🧹</text> -->
         <image class="category-icon" src="/static/images/housework-icon.png" mode="aspectFit"></image>
         <text class="category-text">日常点滴</text>
       </view>
-      <!-- 统一说明，替代每个任务里的 hint -->
       <view class="section-hint">坚持打卡，积攒抽卡机会 💫</view>
       <view class="task-list">
         <view wx:for="{{tasks.housework}}" wx:key="id" class="task-item">
@@ -103,6 +111,4 @@
 
   <!-- 漂浮爱心元素 -->
   <view wx:for="{{hearts}}" wx:key="index" class="floating-heart" style="left: {{item.left}}%; animation-delay: {{item.delay}}s;">{{item.icon}}</view>
-  
 </view>
-

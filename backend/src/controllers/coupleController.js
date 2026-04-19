@@ -1,5 +1,5 @@
 const { success } = require('../utils/response')
-const { createInviteCodeForUser, bindCoupleByInviteCode } = require('../services/coupleService')
+const { createInviteCodeForUser, bindCoupleByInviteCode, unbindCoupleByUserId } = require('../services/coupleService')
 const { appError } = require('../utils/appError')
 
 async function createInviteCode(req, res, next) {
@@ -35,7 +35,21 @@ async function bindCouple(req, res, next) {
   }
 }
 
+async function unbindCouple(req, res, next) {
+  try {
+    const result = await unbindCoupleByUserId(req.auth.userId)
+
+    res.json(success({
+      pairStatus: result.pairStatus,
+      reset: result.reset
+    }, '解绑成功'))
+  } catch (err) {
+    next(err)
+  }
+}
+
 module.exports = {
   createInviteCode,
-  bindCouple
+  bindCouple,
+  unbindCouple
 }

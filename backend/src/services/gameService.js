@@ -1,6 +1,7 @@
 const prisma = require('../lib/prisma')
 const { HEARTS_PER_DRAW, CHECKIN_COOLDOWN_MS } = require('../config/business')
 const { appError } = require('../utils/appError')
+const { assertBoundUser } = require('./coupleService')
 
 async function getOrCreateUserStats(userId) {
   return prisma.userStat.upsert({
@@ -107,6 +108,8 @@ async function buildHomeState(userId, pairStatus, tasks) {
 }
 
 async function performCheckin(userId, taskId) {
+  await assertBoundUser(userId)
+
   const [task, stats, latestCheckin] = await Promise.all([
     prisma.taskCatalog.findFirst({
       where: { id: taskId, active: true }
@@ -165,6 +168,7 @@ async function performCheckin(userId, taskId) {
 }
 
 async function performDraw(userId) {
+  await assertBoundUser(userId)
   const stats = await getOrCreateUserStats(userId)
 
   if (stats.drawChances <= 0) {
